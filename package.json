@@ -1,5 +1,5 @@
 {
-  "name": "iimport-glpi",
+  "name": "import-glpi",
   "types": ["module"],
   "version": "1.4",
   "homepage": "http://github.com/shinken-monitoring/mod-import-glpi",
