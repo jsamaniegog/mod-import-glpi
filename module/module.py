@@ -121,7 +121,7 @@ class Glpi_arbiter(BaseModule):
                      'notes_url', 'action_url', 'icon_image',
                      'icon_image_alt', 'vrml_image', 'statusmap_image',
                      '2d_coords', '3d_coords', 'realm',
-                     'poller_tag', 'business_impact']
+                     'poller_tag', 'business_impact', '_ITEMSID', '_ITEMTYPE']
         for host_info in all_hosts:
             logger.info("[GLPI Arbiter] Host info in GLPI: %s " % str(host_info))
             h = {'host_name': host_info['host_name'],
@@ -182,7 +182,8 @@ class Glpi_arbiter(BaseModule):
                      'first_notification_delay', 'notifications_enabled', 'contact_groups',
                      'stalking_options', 'notes', 'notes_url',
                      'action_url', 'icon_image', 'icon_image_alt',
-                     'poller_tag', 'service_dependencies', 'business_impact']
+                     'poller_tag', 'service_dependencies', 'business_impact',
+                     '_ITEMSID', '_ITEMTYPE']
 
         for service_info in all_services:
             logger.info("[GLPI Arbiter] Service info in GLPI: %s" % service_info)
