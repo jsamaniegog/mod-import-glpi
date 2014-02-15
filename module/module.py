@@ -35,7 +35,7 @@ from shinken.log import logger
 
 properties = {
     'daemons': ['arbiter'],
-    'type': 'glpi',
+    'type': 'glpi_import',
     'external': False,
     'phases': ['configuration'],
     }
@@ -66,17 +66,18 @@ class Glpi_arbiter(BaseModule):
         logger.info("[GLPI Arbiter] I open the GLPI connection to %s" % self.uri)
         self.con = xmlrpclib.ServerProxy(self.uri)
         logger.info("[GLPI Arbiter] Connection opened")
-        logger.info("[GLPI Arbiter] Authentification in progress")
+        logger.info("[GLPI Arbiter] Authentication in progress")
         arg = {'login_name': self.login_name, 'login_password': self.login_password}
         res = self.con.glpi.doLogin(arg)
         self.session = res['session']
-        logger.info("[GLPI Arbiter] My session number %s" % str(self.session))
+        logger.info("[GLPI Arbiter] Authenticated, session : %s" % str(self.session))
 
     # Ok, main function that will load config from GLPI
     def get_objects(self):
         r = {'commands': [],
              'timeperiods': [],
              'hosts': [],
+             'hostgroups': [],
              'services': [],
              'contacts': []}
         arg = {'session': self.session,
@@ -84,9 +85,9 @@ class Glpi_arbiter(BaseModule):
 
         # Get commands
         all_commands = self.con.monitoring.shinkenCommands(arg)
-        logger.info("[GLPI Arbiter] Get all commands: %s" % str(all_commands))
+        # logger.debug("[GLPI Arbiter] Get all commands: %s" % str(all_commands))
         for command_info in all_commands:
-            logger.info("[GLPI Arbiter] Command info in GLPI: %s" % str(command_info))
+            # logger.debug("[GLPI Arbiter] Command info in GLPI: %s" % str(command_info))
             h = {'command_name': command_info['command_name'],
                  'command_line': command_info['command_line'],
                  }
@@ -94,23 +95,23 @@ class Glpi_arbiter(BaseModule):
 
         # Get timeperiods
         all_timeperiods = self.con.monitoring.shinkenTimeperiods(arg)
-        logger.info("[GLPI Arbiter] Get all timeperiods: %s" % str(all_timeperiods))
+        # logger.debug("[GLPI Arbiter] Get all timeperiods: %s" % str(all_timeperiods))
         attributs = ['timeperiod_name', 'alias', 'sunday',
                      'monday', 'tuesday', 'wednesday',
                      'thursday', 'friday', 'saturday']
         for timeperiod_info in all_timeperiods:
-            logger.info("[GLPI Arbiter] Timeperiod info in GLPI: %s" % str(timeperiod_info))
+            # logger.debug("[GLPI Arbiter] Timeperiod info in GLPI: %s" % str(timeperiod_info))
             h = {}
             for attribut in attributs:
                 if attribut in timeperiod_info:
                     h[attribut] = timeperiod_info[attribut]
 
-            logger.debug("[GLPI Arbiter] Returning to Arbiter the timeperiods: %s " % str(h))
+            # logger.debug("[GLPI Arbiter] Returning to Arbiter the timeperiods: %s " % str(h))
             r['timeperiods'].append(h)
 
         # Get hosts
         all_hosts = self.con.monitoring.shinkenHosts(arg)
-        logger.info("[GLPI Arbiter] Get all hosts %s" % str(all_hosts))
+        # logger.debug("[GLPI Arbiter] Get all hosts %s" % str(all_hosts))
         attributs = ['display_name', 'hostgroups', 'initial_state',
                      'active_checks_enabled', 'passive_checks_enabled', 'obsess_over_host',
                      'check_freshness', 'freshness_threshold', 'event_handler',
@@ -118,12 +119,13 @@ class Glpi_arbiter(BaseModule):
                      'flap_detection_enabled', 'flap_detection_options', 'retain_status_information',
                      'retain_nonstatus_information', 'contact_groups', 'first_notification_delay',
                      'notifications_enabled', 'stalking_options', 'notes',
-                     'notes_url', 'action_url', 'icon_image',
+                     'notes_url', 'action_url', 'icon_image', 'icon_set', 'custom_views', 
                      'icon_image_alt', 'vrml_image', 'statusmap_image',
                      '2d_coords', '3d_coords', 'realm',
-                     'poller_tag', 'business_impact', '_ITEMSID', '_ITEMTYPE']
+                     'poller_tag', 'business_impact', '_ENTITIESID', '_ENTITY', '_ITEMSID', '_ITEMTYPE', '_HOSTID', 
+                     '_LOC_LAT', '_LOC_LNG']
         for host_info in all_hosts:
-            logger.info("[GLPI Arbiter] Host info in GLPI: %s " % str(host_info))
+            # logger.debug("[GLPI Arbiter] Host info in GLPI: %s " % str(host_info))
             h = {'host_name': host_info['host_name'],
                  'alias': host_info['alias'],
                  'address': host_info['address'],
@@ -143,9 +145,22 @@ class Glpi_arbiter(BaseModule):
                     h[attribut] = host_info[attribut]
             r['hosts'].append(h)
 
+        # Get hostgroups
+        all_hostgroups = self.con.monitoring.shinkenHostgroups(arg)
+        # logger.debug("[GLPI Arbiter] Get all hostgroups %s" % str(all_hostgroups))
+        attributs = []
+        for hostgroup_info in all_hostgroups:
+            # logger.debug("[GLPI Arbiter] Hostgroup info in GLPI: %s " % str(hostgroup_info))
+            h = {'hostgroup_name': hostgroup_info['hostgroup_name'],
+                 'alias': hostgroup_info['alias']}
+            for attribut in attributs:
+                if attribut in hostgroup_info:
+                    h[attribut] = hostgroup_info[attribut]
+            r['hostgroups'].append(h)
+
         # Get templates
         all_templates = self.con.monitoring.shinkenTemplates(arg)
-        logger.info("[GLPI Arbiter] Get all templates: %s" % str(all_templates))
+        # logger.debug("[GLPI Arbiter] Get all templates: %s" % str(all_templates))
         attributs = ['name', 'check_interval', 'retry_interval',
                      'max_check_attempts', 'check_period', 'notification_interval',
                      'notification_period', 'notification_options', 'active_checks_enabled',
@@ -156,7 +171,7 @@ class Glpi_arbiter(BaseModule):
                      'retain_status_information', 'retain_nonstatus_information', 'is_volatile',
                      '_httpstink']
         for template_info in all_templates:
-            logger.info("[GLPI Arbiter] Template info in GLPI: %s" % template_info)
+            # logger.debug("[GLPI Arbiter] Template info in GLPI: %s" % template_info)
             h = {'register': '0'}
             for attribut in attributs:
                 if attribut in template_info:
@@ -166,7 +181,7 @@ class Glpi_arbiter(BaseModule):
 
         # Get services
         all_services = self.con.monitoring.shinkenServices(arg)
-        logger.info("[GLPI Arbiter] Get all services: %s" % str(all_services))
+        # logger.debug("[GLPI Arbiter] Get all services: %s" % str(all_services))
         attributs = ['host_name', 'hostgroup_name', 'service_description',
                      'use', 'check_command', 'check_interval', 'retry_interval',
                      'max_check_attempts', 'check_period', 'contacts',
@@ -181,12 +196,12 @@ class Glpi_arbiter(BaseModule):
                      'low_flap_threshold', 'high_flap_threshold', 'flap_detection_options',
                      'first_notification_delay', 'notifications_enabled', 'contact_groups',
                      'stalking_options', 'notes', 'notes_url',
-                     'action_url', 'icon_image', 'icon_image_alt',
+                     'action_url', 'icon_image', 'icon_image_alt', 'icon_set', 
                      'poller_tag', 'service_dependencies', 'business_impact',
-                     '_ITEMSID', '_ITEMTYPE']
+                     '_ENTITIESID', '_ENTITY', '_ITEMSID', '_ITEMTYPE', '_HOSTITEMSID', '_HOSTITEMTYPE']
 
         for service_info in all_services:
-            logger.info("[GLPI Arbiter] Service info in GLPI: %s" % service_info)
+            # logger.debug("[GLPI Arbiter] Service info in GLPI: %s" % service_info)
             h = {}
             for attribut in attributs:
                 if attribut in service_info:
@@ -196,9 +211,9 @@ class Glpi_arbiter(BaseModule):
 
         # Get contacts
         all_contacts = self.con.monitoring.shinkenContacts(arg)
-        logger.info("[GLPI Arbiter] Get all contacts: %s" % str(all_contacts))
+        # logger.debug("[GLPI Arbiter] Get all contacts: %s" % str(all_contacts))
         for contact_info in all_contacts:
-            logger.info("[GLPI Arbiter] Contact info in GLPI: %s" % contact_info)
+            # logger.debug("[GLPI Arbiter] Contact info in GLPI: %s" % contact_info)
             h = {'contact_name': contact_info['contact_name'],
                  'alias': contact_info['alias'],
                  'host_notifications_enabled': contact_info['host_notifications_enabled'],
@@ -214,5 +229,6 @@ class Glpi_arbiter(BaseModule):
                  }
             r['contacts'].append(h)
 
-        logger.debug("[GLPI Arbiter] Returning to Arbiter the data: %s" % str(r))
+        # logger.debug("[GLPI Arbiter] Returning to Arbiter the data: %s" % str(r))
+        logger.info("[GLPI Arbiter] Returning all data to Arbiter ")
         return r
