@@ -35,7 +35,7 @@ from shinken.log import logger
 
 properties = {
     'daemons': ['arbiter'],
-    'type': 'glpi_import',
+    'type': 'import-glpi',
     'external': False,
     'phases': ['configuration'],
     }
