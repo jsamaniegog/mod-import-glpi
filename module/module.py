@@ -44,11 +44,7 @@ properties = {
 # called by the plugin manager to get a broker
 def get_instance(plugin):
     logger.info("[GLPI Arbiter] Get a Simple GLPI arbiter for plugin %s" % plugin.get_name())
-    uri = plugin.uri
-    login_name = plugin.login_name
-    login_password = plugin.login_password
-    tag = getattr(plugin, 'tag', "")
-    instance = Glpi_arbiter(plugin, uri, login_name, login_password, tag)
+    instance = Glpi_arbiter(plugin, plugin.uri, plugin.login_name, plugin.login_password, plugin.tag)
     return instance
 
 
@@ -56,10 +52,14 @@ def get_instance(plugin):
 class Glpi_arbiter(BaseModule):
     def __init__(self, mod_conf, uri, login_name, login_password, tag):
         BaseModule.__init__(self, mod_conf)
-        self.uri = uri
-        self.login_name = login_name
-        self.login_password = login_password
-        self.tag = tag
+        try:
+            self.uri = getattr(mod_conf, 'uri', 'http://localhost/glpi/plugins/webservices/xmlrpc.php')
+            self.login_name = getattr(mod_conf, 'login_name', 'shinken')
+            self.login_password = getattr(mod_conf, 'login_password', 'shinken')
+            self.tag = getattr(mod_conf, 'tag', '')
+        except AttributeError:
+            logger.error("[GLPI Arbiter] The module is missing a property, check module declaration in shinken-specific.cfg")
+            raise
 
     # Called by Arbiter to say 'let's prepare yourself guy'
     def init(self):
