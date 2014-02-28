@@ -1,7 +1,7 @@
 {
   "name": "import-glpi",
   "types": ["module"],
-  "version": "1.4",
+  "version": "2.0",
   "homepage": "http://github.com/shinken-monitoring/mod-import-glpi",
   "author": "David Durrieux",
   "description": "Import hosts, servcies, commands... from the GLPI monitoring plugin.",
@@ -23,7 +23,7 @@
     "import"
   ],
   "dependencies": {
-    "shinken": ">=1.4"
+    "shinken": ">=2.0"
   },
   "license": "AGPL"
 }
