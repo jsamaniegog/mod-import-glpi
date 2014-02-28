@@ -58,7 +58,7 @@ class Glpi_arbiter(BaseModule):
             self.login_password = getattr(mod_conf, 'login_password', 'shinken')
             self.tag = getattr(mod_conf, 'tag', '')
         except AttributeError:
-            logger.error("[GLPI Arbiter] The module is missing a property, check module declaration in shinken-specific.cfg")
+            logger.error("[GLPI Arbiter] The module is missing a property, check module configuration in import-glpi.cfg")
             raise
 
     # Called by Arbiter to say 'let's prepare yourself guy'
@@ -87,7 +87,7 @@ class Glpi_arbiter(BaseModule):
         all_commands = self.con.monitoring.shinkenCommands(arg)
         # logger.debug("[GLPI Arbiter] Get all commands: %s" % str(all_commands))
         for command_info in all_commands:
-            # logger.debug("[GLPI Arbiter] Command info in GLPI: %s" % str(command_info))
+            logger.debug("[GLPI Arbiter] Command info in GLPI: %s" % str(command_info))
             h = {'command_name': command_info['command_name'],
                  'command_line': command_info['command_line'],
                  }
@@ -100,7 +100,7 @@ class Glpi_arbiter(BaseModule):
                      'monday', 'tuesday', 'wednesday',
                      'thursday', 'friday', 'saturday']
         for timeperiod_info in all_timeperiods:
-            # logger.debug("[GLPI Arbiter] Timeperiod info in GLPI: %s" % str(timeperiod_info))
+            logger.debug("[GLPI Arbiter] Timeperiod info in GLPI: %s" % str(timeperiod_info))
             h = {}
             for attribut in attributs:
                 if attribut in timeperiod_info:
@@ -125,7 +125,7 @@ class Glpi_arbiter(BaseModule):
                      'poller_tag', 'business_impact', '_ENTITIESID', '_ENTITY', '_ITEMSID', '_ITEMTYPE', '_HOSTID', 
                      '_LOC_LAT', '_LOC_LNG']
         for host_info in all_hosts:
-            # logger.debug("[GLPI Arbiter] Host info in GLPI: %s " % str(host_info))
+            logger.debug("[GLPI Arbiter] Host info in GLPI: %s " % str(host_info))
             h = {'host_name': host_info['host_name'],
                  'alias': host_info['alias'],
                  'address': host_info['address'],
@@ -150,7 +150,7 @@ class Glpi_arbiter(BaseModule):
         # logger.debug("[GLPI Arbiter] Get all hostgroups %s" % str(all_hostgroups))
         attributs = []
         for hostgroup_info in all_hostgroups:
-            # logger.debug("[GLPI Arbiter] Hostgroup info in GLPI: %s " % str(hostgroup_info))
+            logger.debug("[GLPI Arbiter] Hostgroup info in GLPI: %s " % str(hostgroup_info))
             h = {'hostgroup_name': hostgroup_info['hostgroup_name'],
                  'alias': hostgroup_info['alias']}
             for attribut in attributs:
@@ -171,7 +171,7 @@ class Glpi_arbiter(BaseModule):
                      'retain_status_information', 'retain_nonstatus_information', 'is_volatile',
                      '_httpstink']
         for template_info in all_templates:
-            # logger.debug("[GLPI Arbiter] Template info in GLPI: %s" % template_info)
+            logger.debug("[GLPI Arbiter] Template info in GLPI: %s" % template_info)
             h = {'register': '0'}
             for attribut in attributs:
                 if attribut in template_info:
@@ -201,7 +201,7 @@ class Glpi_arbiter(BaseModule):
                      '_ENTITIESID', '_ENTITY', '_ITEMSID', '_ITEMTYPE', '_HOSTITEMSID', '_HOSTITEMTYPE']
 
         for service_info in all_services:
-            # logger.debug("[GLPI Arbiter] Service info in GLPI: %s" % service_info)
+            logger.debug("[GLPI Arbiter] Service info in GLPI: %s" % service_info)
             h = {}
             for attribut in attributs:
                 if attribut in service_info:
@@ -213,7 +213,7 @@ class Glpi_arbiter(BaseModule):
         all_contacts = self.con.monitoring.shinkenContacts(arg)
         # logger.debug("[GLPI Arbiter] Get all contacts: %s" % str(all_contacts))
         for contact_info in all_contacts:
-            # logger.debug("[GLPI Arbiter] Contact info in GLPI: %s" % contact_info)
+            logger.debug("[GLPI Arbiter] Contact info in GLPI: %s" % contact_info)
             h = {'contact_name': contact_info['contact_name'],
                  'alias': contact_info['alias'],
                  'host_notifications_enabled': contact_info['host_notifications_enabled'],
