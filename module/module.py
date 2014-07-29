@@ -66,7 +66,7 @@ class Glpi_arbiter(BaseModule):
         logger.info("[GLPI Arbiter] I open the GLPI connection to %s" % self.uri)
         self.con = xmlrpclib.ServerProxy(self.uri)
         logger.info("[GLPI Arbiter] Connection opened")
-        logger.info("[GLPI Arbiter] Authentication in progress")
+        logger.info("[GLPI Arbiter] Authentication in progress...")
         arg = {'login_name': self.login_name, 'login_password': self.login_password}
         res = self.con.glpi.doLogin(arg)
         self.session = res['session']
@@ -91,6 +91,13 @@ class Glpi_arbiter(BaseModule):
             h = {'command_name': command_info['command_name'],
                  'command_line': command_info['command_line'],
                  }
+            if 'module_type' in command_info:
+                h.update({'module_type': command_info['module_type']})
+            if 'poller_tag' in command_info:
+                h.update({'poller_tag': command_info['poller_tag']})
+            if 'reactionner_tag' in command_info:
+                h.update({'reactionner_tag': command_info['reactionner_tag']})
+                
             r['commands'].append(h)
 
         # Get timeperiods
