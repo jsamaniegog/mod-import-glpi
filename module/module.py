@@ -92,7 +92,8 @@ class Glpi_arbiter(BaseModule):
             tag = tag.strip()
             logger.info("[GLPI Arbiter] Getting configuration for entity tagged with '%s'" % tag)
             
-            arg = {'session': self.session, 'tag': tag}
+			# iso8859 is necessary because Arbiter does not deal with UTF8 objects !
+            arg = {'session': self.session, 'iso8859': '1', 'tag': tag}
 
             # Get commands
             all_commands = self.con.monitoring.shinkenCommands(arg)
