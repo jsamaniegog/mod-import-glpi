@@ -85,8 +85,12 @@ class Glpi_arbiter(BaseModule):
         if len(self.tags) == 0:
             self.tags = self.tag
             
-        self.tags = self.tags.split(',')
-        logger.debug("[GLPI Arbiter] Tags: %s" % str(self.tags))
+        logger.debug("[GLPI Arbiter] Tags in configuration file: %s" % str(self.tags))
+        try:
+            self.tags = self.tags.split(',')
+        except:
+            pass
+        logger.info("[GLPI Arbiter] Tags: %s" % str(self.tags))
             
         for tag in self.tags:
             tag = tag.strip()
