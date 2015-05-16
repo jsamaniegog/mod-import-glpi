@@ -117,24 +117,6 @@ class Glpi_arbiter(BaseModule):
                     r['commands'].append(h)
                     logger.debug("[GLPI Arbiter] Command info in Shinken: %s" % str(h))
 
-            # Get timeperiods
-            all_timeperiods = self.con.monitoring.shinkenTimeperiods(arg)
-            logger.warning("[GLPI Arbiter] Got %d timeperiods", len(all_timeperiods))
-            # List attributes provided by Glpi and that need to be deleted for Shinken
-            deleted_attributes = []
-            for timeperiod_info in all_timeperiods:
-                logger.debug("[GLPI Arbiter] Timeperiod info in GLPI: %s" % str(timeperiod_info))
-                h = timeperiod_info
-                for attribute in deleted_attributes:
-                    if attribute in h:
-                        logger.warning("[GLPI Arbiter] Delete attribute '%s' for timeperiod '%s'", attribute, h['timeperiod_name'])
-                        del h[attribute]
-
-                if h not in r['timeperiods']:
-                    logger.info("[GLPI Arbiter] New timeperiod: %s" % h['timeperiod_name'])
-                    r['timeperiods'].append(h)
-                    logger.debug("[GLPI Arbiter] Timeperiod info in Shinken: %s" % str(h))
-
             # Get hosts
             all_hosts = self.con.monitoring.shinkenHosts(arg)
             logger.warning("[GLPI Arbiter] Got %d hosts", len(all_hosts))
@@ -224,6 +206,24 @@ class Glpi_arbiter(BaseModule):
                     logger.info("[GLPI Arbiter] New contact: %s" % (h['contact_name']))
                     r['contacts'].append(h)
                     logger.debug("[GLPI Arbiter] Contact info in Shinken: %s" % str(h))
+
+            # Get timeperiods
+            all_timeperiods = self.con.monitoring.shinkenTimeperiods(arg)
+            logger.warning("[GLPI Arbiter] Got %d timeperiods", len(all_timeperiods))
+            # List attributes provided by Glpi and that need to be deleted for Shinken
+            deleted_attributes = []
+            for timeperiod_info in all_timeperiods:
+                logger.debug("[GLPI Arbiter] Timeperiod info in GLPI: %s" % str(timeperiod_info))
+                h = timeperiod_info
+                for attribute in deleted_attributes:
+                    if attribute in h:
+                        logger.warning("[GLPI Arbiter] Delete attribute '%s' for timeperiod '%s'", attribute, h['timeperiod_name'])
+                        del h[attribute]
+
+                if h not in r['timeperiods']:
+                    logger.info("[GLPI Arbiter] New timeperiod: %s" % h['timeperiod_name'])
+                    r['timeperiods'].append(h)
+                    logger.debug("[GLPI Arbiter] Timeperiod info in Shinken: %s" % str(h))
 
         logger.warning("[GLPI Arbiter] Sending %d commands to Arbiter", len(r['commands']))
         logger.warning("[GLPI Arbiter] Sending %d hosts to Arbiter", len(r['hosts']))

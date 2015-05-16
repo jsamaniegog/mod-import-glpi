@@ -31,20 +31,19 @@ Enabling GLPI Shinken module
 =============================
 
 To use the import-glpi module you must declare it in your arbiter configuration.
-
-::
-
-  define arbiter {
+```
+   define arbiter {
       ... 
 
       modules    	 ..., import-glip
 
-  }
+   }
+```
 
 
 The module configuration is defined in the file: import-glpi.cfg.
 
-Default configuration nedds to be tuned up to your Glpi configuration. 
+Default configuration needs to be tuned up to your Glpi configuration. 
 
 At first, you need to activate and configure the GLPI WebServices to allow 
 connection from your Shinken server.
@@ -52,12 +51,11 @@ Then you set the WS URI (uri) and the login information (login_name / login_pass
 parameters in the configuration file.
 
 Default is that all hosts known from the plugin Monitoring are monitored by Shinken. 
-If you want to monitor only some of them, you may use the tags parameter to set a alit
+If you want to monitor only some of them, you may use the tags parameter to set a list
 of Glpi entities to be monitored.
 For each entity, you need to configure a tag that you will use in the configuration file.
 
-::
-
+```
   ## Module:      import-glpi
   ## Loaded by:   Arbiter
   # Loads configuration from GLPI web application.
@@ -79,12 +77,13 @@ For each entity, you need to configure a tag that you will use in the configurat
       # Default : empty to get all objects declared in GLPI
       # Tag may be associated with a Glpi entity to filter monitored hosts/services
       # Note: still usable for compatibility purpose, it is better to use tags attribute
-      #tag             Parc_CNAMTS
+      #tag             All_hosts
+      
       # Default : empty to get all objects declared in GLPI
       # tags may contain a list of tags to get several entities from GLPI
       # When getting objects from several entities, the module deletes duplicate objects
-      tag             CPAM_Paris
-      tags            CPAM_Paris, CPAM_Roubaix, Parc_IPM
+      #tags            entity1, entity2
   }
+```
 
 It's done :)
