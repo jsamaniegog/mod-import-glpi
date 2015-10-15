@@ -101,7 +101,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get commands
             all_commands = self.con.monitoring.shinkenCommands(arg)
-            logger.warning("[GLPI Arbiter] Got %d commands", len(all_commands))
+            logger.warning("[GLPI Arbiter] Got %d commands" % len(all_commands))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for command_info in all_commands:
@@ -119,7 +119,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get hosts
             all_hosts = self.con.monitoring.shinkenHosts(arg)
-            logger.warning("[GLPI Arbiter] Got %d hosts", len(all_hosts))
+            logger.warning("[GLPI Arbiter] Got %d hosts" % len(all_hosts))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for host_info in all_hosts:
@@ -137,7 +137,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get hostgroups
             all_hostgroups = self.con.monitoring.shinkenHostgroups(arg)
-            logger.info("[GLPI Arbiter] Got %d hostgroups", len(all_hostgroups))
+            logger.info("[GLPI Arbiter] Got %d hostgroups" % len(all_hostgroups))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for hostgroup_info in all_hostgroups:
@@ -155,7 +155,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get templates
             all_templates = self.con.monitoring.shinkenTemplates(arg)
-            logger.warning("[GLPI Arbiter] Got %d services templates", len(all_templates))
+            logger.warning("[GLPI Arbiter] Got %d services templates" % len(all_templates))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for template_info in all_templates:
@@ -173,7 +173,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get services
             all_services = self.con.monitoring.shinkenServices(arg)
-            logger.warning("[GLPI Arbiter] Got %d services", len(all_services))
+            logger.warning("[GLPI Arbiter] Got %d services" % len(all_services))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for service_info in all_services:
@@ -191,7 +191,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get contacts
             all_contacts = self.con.monitoring.shinkenContacts(arg)
-            logger.warning("[GLPI Arbiter] Got %d contacts", len(all_contacts))
+            logger.warning("[GLPI Arbiter] Got %d contacts" % len(all_contacts))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for contact_info in all_contacts:
@@ -209,7 +209,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get timeperiods
             all_timeperiods = self.con.monitoring.shinkenTimeperiods(arg)
-            logger.warning("[GLPI Arbiter] Got %d timeperiods", len(all_timeperiods))
+            logger.warning("[GLPI Arbiter] Got %d timeperiods" % len(all_timeperiods))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for timeperiod_info in all_timeperiods:
@@ -225,13 +225,13 @@ class Glpi_arbiter(BaseModule):
                     r['timeperiods'].append(h)
                     logger.debug("[GLPI Arbiter] Timeperiod info in Shinken: %s" % str(h))
 
-        logger.warning("[GLPI Arbiter] Sending %d commands to Arbiter", len(r['commands']))
-        logger.warning("[GLPI Arbiter] Sending %d hosts to Arbiter", len(r['hosts']))
-        logger.warning("[GLPI Arbiter] Sending %d hosts groups to Arbiter", len(r['hostgroups']))
-        logger.warning("[GLPI Arbiter] Sending %d services templates to Arbiter", len(r['servicestemplates']))
-        logger.warning("[GLPI Arbiter] Sending %d services to Arbiter", len(r['services']))
-        logger.warning("[GLPI Arbiter] Sending %d timeperiods to Arbiter", len(r['timeperiods']))
-        logger.warning("[GLPI Arbiter] Sending %d contacts to Arbiter", len(r['contacts']))
+        logger.warning("[GLPI Arbiter] Sending %d commands to Arbiter" % len(r['commands']))
+        logger.warning("[GLPI Arbiter] Sending %d hosts to Arbiter" % len(r['hosts']))
+        logger.warning("[GLPI Arbiter] Sending %d hosts groups to Arbiter" % len(r['hostgroups']))
+        logger.warning("[GLPI Arbiter] Sending %d services templates to Arbiter" % len(r['servicestemplates']))
+        logger.warning("[GLPI Arbiter] Sending %d services to Arbiter" % len(r['services']))
+        logger.warning("[GLPI Arbiter] Sending %d timeperiods to Arbiter" % len(r['timeperiods']))
+        logger.warning("[GLPI Arbiter] Sending %d contacts to Arbiter" % len(r['contacts']))
         logger.info("[GLPI Arbiter] Sending all data to Arbiter")
         
         r['services'] = r['services'] + r['servicestemplates']
