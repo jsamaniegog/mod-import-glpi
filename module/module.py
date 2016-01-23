@@ -60,20 +60,30 @@ class Glpi_arbiter(BaseModule):
             # tag is still managed for compatibility purposes, better use tags!
             self.tag = getattr(mod_conf, 'tag', '')
             self.tags = getattr(mod_conf, 'tags', '')
+            self.session = None
         except AttributeError:
             logger.error("[GLPI Arbiter] The module is missing a property, check module configuration in import-glpi.cfg")
             raise
 
     # Called by Arbiter to say 'let's prepare yourself guy'
     def init(self):
-        logger.info("[GLPI Arbiter] Connecting to %s" % self.uri)
-        self.con = xmlrpclib.ServerProxy(self.uri)
-        logger.info("[GLPI Arbiter] Connection opened")
-        logger.info("[GLPI Arbiter] Authentication in progress...")
-        arg = {'login_name': self.login_name, 'login_password': self.login_password}
-        res = self.con.glpi.doLogin(arg)
-        self.session = res['session']
-        logger.info("[GLPI Arbiter] Authenticated, session : %s" % str(self.session))
+        """
+        Connect to the Glpi Web Service.
+        """
+        try:
+            logger.info("[GLPI Arbiter] Connecting to %s" % self.uri)
+            self.con = xmlrpclib.ServerProxy(self.uri)
+            logger.info("[GLPI Arbiter] Connection opened")
+            logger.info("[GLPI Arbiter] Authentication in progress...")
+            arg = {'login_name': self.login_name, 'login_password': self.login_password}
+            res = self.con.glpi.doLogin(arg)
+            self.session = res['session']
+            logger.info("[GLPI Arbiter] Authenticated, session : %s" % str(self.session))
+        except Exception as e:
+            logger.error("[GLPI Arbiter] WS connection error: %s", str(e))
+            self.con = None
+
+        return self.con
 
     # Ok, main function that will load config from GLPI
     def get_objects(self):
@@ -84,6 +94,9 @@ class Glpi_arbiter(BaseModule):
              'servicestemplates': [],
              'services': [],
              'contacts': []}
+
+        if not self.session:
+            logger.error("[GLPI Arbiter] No opened session, no objects to provide.")
 
         if not self.tags:
             self.tags = self.tag
@@ -98,13 +111,13 @@ class Glpi_arbiter(BaseModule):
         for tag in self.tags:
             tag = tag.strip()
             logger.info("[GLPI Arbiter] Getting configuration for entity tagged with '%s'" % tag)
-            
+
 			# iso8859 is necessary because Arbiter does not deal with UTF8 objects !
             arg = {'session': self.session, 'iso8859': '1', 'tag': tag}
 
             # Get commands
             all_commands = self.con.monitoring.shinkenCommands(arg)
-            logger.warning("[GLPI Arbiter] Got %d commands" % len(all_commands))
+            logger.warning("[GLPI Arbiter] Got %d commands", len(all_commands))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for command_info in all_commands:
@@ -114,7 +127,7 @@ class Glpi_arbiter(BaseModule):
                     if attribute in h:
                         logger.warning("[GLPI Arbiter] Delete attribute '%s' for command '%s'", attribute, h['command_name'])
                         del h[attribute]
-                
+
                 if h not in r['commands']:
                     logger.info("[GLPI Arbiter] New command: %s" % h['command_name'])
                     r['commands'].append(h)
@@ -122,7 +135,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get hosts
             all_hosts = self.con.monitoring.shinkenHosts(arg)
-            logger.warning("[GLPI Arbiter] Got %d hosts" % len(all_hosts))
+            logger.warning("[GLPI Arbiter] Got %d hosts", len(all_hosts))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for host_info in all_hosts:
@@ -132,7 +145,7 @@ class Glpi_arbiter(BaseModule):
                     if attribute in h:
                         logger.warning("[GLPI Arbiter] Delete attribute '%s' for host '%s'", attribute, h['host_name'])
                         del h[attribute]
-                        
+
                 if h not in r['hosts']:
                     logger.info("[GLPI Arbiter] New host: %s" % h['host_name'])
                     r['hosts'].append(h)
@@ -140,7 +153,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get hostgroups
             all_hostgroups = self.con.monitoring.shinkenHostgroups(arg)
-            logger.info("[GLPI Arbiter] Got %d hostgroups" % len(all_hostgroups))
+            logger.info("[GLPI Arbiter] Got %d hostgroups", len(all_hostgroups))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for hostgroup_info in all_hostgroups:
@@ -150,7 +163,7 @@ class Glpi_arbiter(BaseModule):
                     if attribute in h:
                         logger.warning("[GLPI Arbiter] Delete attribute '%s' for hostgroup '%s'", attribute, h['hostgroup_name'])
                         del h[attribute]
-                        
+
                 if h not in r['hostgroups']:
                     logger.info("[GLPI Arbiter] New hostgroup: %s" % h['hostgroup_name'])
                     r['hostgroups'].append(h)
@@ -158,7 +171,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get templates
             all_templates = self.con.monitoring.shinkenTemplates(arg)
-            logger.warning("[GLPI Arbiter] Got %d services templates" % len(all_templates))
+            logger.warning("[GLPI Arbiter] Got %d services templates", len(all_templates))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for template_info in all_templates:
@@ -176,7 +189,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get services
             all_services = self.con.monitoring.shinkenServices(arg)
-            logger.warning("[GLPI Arbiter] Got %d services" % len(all_services))
+            logger.warning("[GLPI Arbiter] Got %d services", len(all_services))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for service_info in all_services:
@@ -194,7 +207,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get contacts
             all_contacts = self.con.monitoring.shinkenContacts(arg)
-            logger.warning("[GLPI Arbiter] Got %d contacts" % len(all_contacts))
+            logger.warning("[GLPI Arbiter] Got %d contacts", len(all_contacts))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for contact_info in all_contacts:
@@ -204,7 +217,7 @@ class Glpi_arbiter(BaseModule):
                     if attribute in h:
                         logger.warning("[GLPI Arbiter] Delete attribute '%s' for contact '%s'", attribute, h['contact_name'])
                         del h[attribute]
-                    
+
                 if h not in r['contacts']:
                     logger.info("[GLPI Arbiter] New contact: %s" % (h['contact_name']))
                     r['contacts'].append(h)
@@ -212,7 +225,7 @@ class Glpi_arbiter(BaseModule):
 
             # Get timeperiods
             all_timeperiods = self.con.monitoring.shinkenTimeperiods(arg)
-            logger.warning("[GLPI Arbiter] Got %d timeperiods" % len(all_timeperiods))
+            logger.warning("[GLPI Arbiter] Got %d timeperiods", len(all_timeperiods))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for timeperiod_info in all_timeperiods:
@@ -228,16 +241,16 @@ class Glpi_arbiter(BaseModule):
                     r['timeperiods'].append(h)
                     logger.debug("[GLPI Arbiter] Timeperiod info in Shinken: %s" % str(h))
 
-        logger.warning("[GLPI Arbiter] Sending %d commands to Arbiter" % len(r['commands']))
-        logger.warning("[GLPI Arbiter] Sending %d hosts to Arbiter" % len(r['hosts']))
-        logger.warning("[GLPI Arbiter] Sending %d hosts groups to Arbiter" % len(r['hostgroups']))
-        logger.warning("[GLPI Arbiter] Sending %d services templates to Arbiter" % len(r['servicestemplates']))
-        logger.warning("[GLPI Arbiter] Sending %d services to Arbiter" % len(r['services']))
-        logger.warning("[GLPI Arbiter] Sending %d timeperiods to Arbiter" % len(r['timeperiods']))
-        logger.warning("[GLPI Arbiter] Sending %d contacts to Arbiter" % len(r['contacts']))
+        logger.warning("[GLPI Arbiter] Sending %d commands to Arbiter", len(r['commands']))
+        logger.warning("[GLPI Arbiter] Sending %d hosts to Arbiter", len(r['hosts']))
+        logger.warning("[GLPI Arbiter] Sending %d hosts groups to Arbiter", len(r['hostgroups']))
+        logger.warning("[GLPI Arbiter] Sending %d services templates to Arbiter", len(r['servicestemplates']))
+        logger.warning("[GLPI Arbiter] Sending %d services to Arbiter", len(r['services']))
+        logger.warning("[GLPI Arbiter] Sending %d timeperiods to Arbiter", len(r['timeperiods']))
+        logger.warning("[GLPI Arbiter] Sending %d contacts to Arbiter", len(r['contacts']))
         logger.info("[GLPI Arbiter] Sending all data to Arbiter")
-        
+
         r['services'] = r['services'] + r['servicestemplates']
         del r['servicestemplates']
-        
+
         return r
