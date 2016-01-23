@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2009-2012:
@@ -7,6 +6,8 @@
 #    Gerhard Lausser, Gerhard.Lausser@consol.de
 #    Gregory Starck, g.starck@gmail.com
 #    Hartmut Goebel, h.goebel@goebel-consult.de
+#    David Durieux, d.durieux@siprossii
+#    Frederic Mohier, frederic.mohier@gmail.com
 #
 # This file is part of Shinken.
 #
@@ -56,6 +57,7 @@ class Glpi_arbiter(BaseModule):
             self.uri = getattr(mod_conf, 'uri', 'http://localhost/glpi/plugins/webservices/xmlrpc.php')
             self.login_name = getattr(mod_conf, 'login_name', 'shinken')
             self.login_password = getattr(mod_conf, 'login_password', 'shinken')
+            # tag is still managed for compatibility purposes, better use tags!
             self.tag = getattr(mod_conf, 'tag', '')
             self.tags = getattr(mod_conf, 'tags', '')
         except AttributeError:
@@ -82,16 +84,17 @@ class Glpi_arbiter(BaseModule):
              'servicestemplates': [],
              'services': [],
              'contacts': []}
-        if len(self.tags) == 0:
+
+        if not self.tags:
             self.tags = self.tag
-            
+
         logger.debug("[GLPI Arbiter] Tags in configuration file: %s" % str(self.tags))
         try:
             self.tags = self.tags.split(',')
         except:
             pass
-        logger.info("[GLPI Arbiter] Tags: %s" % str(self.tags))
-            
+        logger.info("[GLPI Arbiter] Tags (from configuration): %s" % str(self.tags))
+
         for tag in self.tags:
             tag = tag.strip()
             logger.info("[GLPI Arbiter] Getting configuration for entity tagged with '%s'" % tag)

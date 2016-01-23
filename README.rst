@@ -35,7 +35,7 @@ To use the import-glpi module you must declare it in your arbiter configuration.
    define arbiter {
       ... 
 
-      modules    	 ..., import-glip
+      modules    	 ..., import-glpi
 
    }
 ```
