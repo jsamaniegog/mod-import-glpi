@@ -109,7 +109,6 @@ class Glpi_arbiter(BaseModule):
              'contacts': []}
 
         if self.target == 'files':
-            self.get_files()
             return r
 
         if not self.session:
