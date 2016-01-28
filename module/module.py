@@ -30,6 +30,7 @@
 # hosts. Simple way from now
 
 import xmlrpclib
+import os
 
 from shinken.basemodule import BaseModule
 from shinken.log import logger
@@ -61,6 +62,17 @@ class Glpi_arbiter(BaseModule):
             self.tag = getattr(mod_conf, 'tag', '')
             self.tags = getattr(mod_conf, 'tags', '')
             self.session = None
+
+            # Target to build files on disk
+            self.target = getattr(mod_conf, 'target', 'files')
+            self.target_directory = getattr(mod_conf, 'target_directory', '/etc/shinken/glpi')
+            if not os.path.exists(self.target_directory):
+                try:
+                    os.mkdir(self.target_directory)
+                    logger.info("[GLPI Arbiter] Created directory: %s", self.target_directory)
+                except Exception, exp:
+                    logger.error("[GLPI Arbiter] Directory creation failed: %s", exp)
+
         except AttributeError:
             logger.error("[GLPI Arbiter] The module is missing a property, check module configuration in import-glpi.cfg")
             raise
@@ -95,6 +107,10 @@ class Glpi_arbiter(BaseModule):
              'services': [],
              'contacts': []}
 
+        if self.target == 'files':
+            self.get_files()
+            return r
+
         if not self.session:
             logger.error("[GLPI Arbiter] No opened session, no objects to provide.")
 
@@ -108,7 +124,37 @@ class Glpi_arbiter(BaseModule):
             pass
         logger.info("[GLPI Arbiter] Tags (from configuration): %s" % str(self.tags))
 
+        # Try to find sub-tags if they exist in Glpi
+        # ---------------------------------------------------------------------------------------
+        # WS ShinkenTags:
+        # 1/ search for an entity tagged with the provided tag
+        # 2/ get the list of this entity's immediate sons
+        # 3/ returns the list of the sons' tags
+        # ---------------------------------------------------------------------------------------
+        # Instead of requesting configuration for an entity, this strategy allows to request
+        # configuration from several sub-entities ... to avoid very long request/response time.
+        self.new_tags = []
         for tag in self.tags:
+            tag = tag.strip()
+            logger.info("[import-glpi] Getting Glpi tags for entity tagged with '%s'" % tag)
+
+            # iso8859 is necessary because Arbiter does not deal with UTF8 objects !
+            arg = {'session': self.session, 'iso8859': '1', 'tag': tag}
+
+            # Get commands
+            all_tags = self.con.monitoring.shinkenTags(arg)
+            logger.warning("[import-glpi] Got %d tags", len(all_tags))
+            if all_tags:
+                # Remove current tag and replace with Glpi provided list ...
+                # self.tags.remove(tag)
+                for new_tag in all_tags:
+                    self.new_tags.append(new_tag)
+            else:
+                self.new_tags.append(tag)
+
+        logger.info("[import-glpi] Tags (from configuration + Glpi): %s" % str(self.new_tags))
+
+        for tag in self.new_tags:
             tag = tag.strip()
             logger.info("[GLPI Arbiter] Getting configuration for entity tagged with '%s'" % tag)
 
@@ -254,3 +300,100 @@ class Glpi_arbiter(BaseModule):
         del r['servicestemplates']
 
         return r
+
+    # Load configuration files from Glpi
+    def get_files(self):
+        r = {'files': []}
+
+        if not self.session:
+            logger.error("[GLPI Arbiter] No opened session, no objects to provide.")
+
+        if not self.tags:
+            self.tags = self.tag
+
+        logger.debug("[GLPI Arbiter] Tags in configuration file: %s" % str(self.tags))
+        try:
+            self.tags = self.tags.split(',')
+        except:
+            pass
+        logger.info("[GLPI Arbiter] Tags (from configuration): %s" % str(self.tags))
+
+        # Try to find sub-tags if they exist in Glpi
+        # ---------------------------------------------------------------------------------------
+        # WS ShinkenTags:
+        # 1/ search for an entity tagged with the provided tag
+        # 2/ get the list of this entity's immediate sons
+        # 3/ returns the list of the sons' tags
+        # ---------------------------------------------------------------------------------------
+        # Instead of requesting configuration for an entity, this strategy allows to request
+        # configuration from several sub-entities ... to avoid very long request/response time.
+        self.new_tags = []
+        for tag in self.tags:
+            tag = tag.strip()
+            logger.info("[import-glpi] Getting Glpi tags for entity tagged with '%s'" % tag)
+
+            # iso8859 is necessary because Arbiter does not deal with UTF8 objects !
+            arg = {'session': self.session, 'iso8859': '1', 'tag': tag}
+
+            # Get commands
+            all_tags = self.con.monitoring.shinkenTags(arg)
+            logger.warning("[import-glpi] Got %d tags", len(all_tags))
+            if all_tags:
+                # Remove current tag and replace with Glpi provided list ...
+                # self.tags.remove(tag)
+                for new_tag in all_tags:
+                    self.new_tags.append(new_tag)
+            else:
+                self.new_tags.append(tag)
+
+        logger.info("[import-glpi] Tags (from configuration + Glpi): %s" % str(self.new_tags))
+
+        for tag in self.new_tags:
+            tag = tag.strip()
+            logger.info("[GLPI Arbiter] Getting configuration files for entity tagged with '%s'" % tag)
+
+			# iso8859 is necessary because Arbiter does not deal with UTF8 objects !
+            arg = {
+                'session': self.session,
+                'iso8859': '1',
+                'file': 'all',
+                'tag': tag
+            }
+
+            # Get files
+            all_files = self.con.monitoring.shinkenGetConffiles(arg)
+            logger.warning("[GLPI Arbiter] Got %d files", len(all_files))
+            # List attributes provided by Glpi and that need to be deleted for Shinken
+            for file in all_files:
+                logger.info("[GLPI Arbiter] configuration file received from GLPI: %s" % file)
+                # logger.info("[GLPI Arbiter] file content: %s" % all_files[file])
+                filename = os.path.join(self.target_directory, "%s-%s" % (tag, file))
+
+                if filename not in r['files']:
+                    logger.info("[GLPI Arbiter] creating new file: %s ..." % filename)
+                    r['files'].append(filename)
+
+                    try:
+                        with os.fdopen(os.open(filename, os.O_WRONLY | os.O_CREAT, 0o644), 'w') as cfg_file:
+                            try:
+                                cfg_file.write(all_files[file].encode('utf8', 'ignore'))
+                                # if isinstance(ticket[field], basestring):
+                                    # ticket[field] = ticket[field].encode('utf8', 'ignore')
+                                    # logger.info("[glpi-helpdesk] getTicket, field: %s = %s", field, ticket[field])
+                            except UnicodeEncodeError:
+                                logger.error("[GLPI Arbiter] Error when encoding file content: %s - %s" % (filename, str(e)))
+                                pass
+                        logger.info("[GLPI Arbiter] created file: %s" % filename)
+                    except Exception as e:
+                        logger.error("[GLPI Arbiter] Error when writing file: %s - %s" % (filename, str(e)))
+                        logger.error("[GLPI Arbiter] file content: %s" % all_files[file])
+
+        logger.warning("[GLPI Arbiter] received %d files from Glpi" % len(r['files']))
+
+        return r
+
+# if __name__ == '__main__':
+    # conf = {
+    # }
+
+    # instance = Glpi_arbiter(conf)
