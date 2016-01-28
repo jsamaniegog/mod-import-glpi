@@ -45,7 +45,7 @@ properties = {
 
 # called by the plugin manager to get a broker
 def get_instance(plugin):
-    logger.info("[GLPI Arbiter] Get a Simple GLPI arbiter for plugin %s" % plugin.get_name())
+    logger.info("[import-glpi] Get a Simple import-glpi for plugin %s" % plugin.get_name())
     instance = Glpi_arbiter(plugin)
     return instance
 
@@ -70,12 +70,12 @@ class Glpi_arbiter(BaseModule):
                 if not os.path.exists(self.target_directory):
                     try:
                         os.mkdir(self.target_directory)
-                        logger.info("[GLPI Arbiter] Created directory: %s", self.target_directory)
+                        logger.info("[import-glpi] Created directory: %s", self.target_directory)
                     except Exception, exp:
-                        logger.error("[GLPI Arbiter] Directory creation failed: %s", exp)
+                        logger.error("[import-glpi] Directory creation failed: %s", exp)
 
         except AttributeError:
-            logger.error("[GLPI Arbiter] The module is missing a property, check module configuration in import-glpi.cfg")
+            logger.error("[import-glpi] The module is missing a property, check module configuration in import-glpi.cfg")
             raise
 
     # Called by Arbiter to say 'let's prepare yourself guy'
@@ -84,16 +84,16 @@ class Glpi_arbiter(BaseModule):
         Connect to the Glpi Web Service.
         """
         try:
-            logger.info("[GLPI Arbiter] Connecting to %s" % self.uri)
+            logger.info("[import-glpi] Connecting to %s" % self.uri)
             self.con = xmlrpclib.ServerProxy(self.uri)
-            logger.info("[GLPI Arbiter] Connection opened")
-            logger.info("[GLPI Arbiter] Authentication in progress...")
+            logger.info("[import-glpi] Connection opened")
+            logger.info("[import-glpi] Authentication in progress...")
             arg = {'login_name': self.login_name, 'login_password': self.login_password}
             res = self.con.glpi.doLogin(arg)
             self.session = res['session']
-            logger.info("[GLPI Arbiter] Authenticated, session : %s" % str(self.session))
+            logger.info("[import-glpi] Authenticated, session : %s" % str(self.session))
         except Exception as e:
-            logger.error("[GLPI Arbiter] WS connection error: %s", str(e))
+            logger.error("[import-glpi] WS connection error: %s", str(e))
             self.con = None
 
         return self.con
@@ -112,18 +112,18 @@ class Glpi_arbiter(BaseModule):
             return r
 
         if not self.session:
-            logger.error("[GLPI Arbiter] No opened session, no objects to provide.")
+            logger.error("[import-glpi] No opened session, no objects to provide.")
             return None
 
         if not self.tags:
             self.tags = self.tag
 
-        logger.debug("[GLPI Arbiter] Tags in configuration file: %s" % str(self.tags))
+        logger.debug("[import-glpi] Tags in configuration file: %s" % str(self.tags))
         try:
             self.tags = self.tags.split(',')
         except:
             pass
-        logger.info("[GLPI Arbiter] Tags (from configuration): %s" % str(self.tags))
+        logger.info("[import-glpi] Tags (from configuration): %s" % str(self.tags))
 
         # Try to find sub-tags if they exist in Glpi
         # ---------------------------------------------------------------------------------------
@@ -157,145 +157,145 @@ class Glpi_arbiter(BaseModule):
 
         for tag in self.new_tags:
             tag = tag.strip()
-            logger.info("[GLPI Arbiter] Getting configuration for entity tagged with '%s'" % tag)
+            logger.info("[import-glpi] Getting configuration for entity tagged with '%s'" % tag)
 
 			# iso8859 is necessary because Arbiter does not deal with UTF8 objects !
             arg = {'session': self.session, 'iso8859': '1', 'tag': tag}
 
             # Get commands
             all_commands = self.con.monitoring.shinkenCommands(arg)
-            logger.warning("[GLPI Arbiter] Got %d commands", len(all_commands))
+            logger.warning("[import-glpi] Got %d commands", len(all_commands))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for command_info in all_commands:
-                logger.debug("[GLPI Arbiter] Command info in GLPI: %s" % str(command_info))
+                logger.debug("[import-glpi] Command info in GLPI: %s" % str(command_info))
                 h = command_info
                 for attribute in deleted_attributes:
                     if attribute in h:
-                        logger.warning("[GLPI Arbiter] Delete attribute '%s' for command '%s'", attribute, h['command_name'])
+                        logger.warning("[import-glpi] Delete attribute '%s' for command '%s'", attribute, h['command_name'])
                         del h[attribute]
 
                 if h not in r['commands']:
-                    logger.info("[GLPI Arbiter] New command: %s" % h['command_name'])
+                    logger.info("[import-glpi] New command: %s" % h['command_name'])
                     r['commands'].append(h)
-                    logger.debug("[GLPI Arbiter] Command info in Shinken: %s" % str(h))
+                    logger.debug("[import-glpi] Command info in Shinken: %s" % str(h))
 
             # Get hosts
             all_hosts = self.con.monitoring.shinkenHosts(arg)
-            logger.warning("[GLPI Arbiter] Got %d hosts", len(all_hosts))
+            logger.warning("[import-glpi] Got %d hosts", len(all_hosts))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for host_info in all_hosts:
-                logger.debug("[GLPI Arbiter] Host info in GLPI: %s " % str(host_info))
+                logger.debug("[import-glpi] Host info in GLPI: %s " % str(host_info))
                 h = host_info
                 for attribute in deleted_attributes:
                     if attribute in h:
-                        logger.warning("[GLPI Arbiter] Delete attribute '%s' for host '%s'", attribute, h['host_name'])
+                        logger.warning("[import-glpi] Delete attribute '%s' for host '%s'", attribute, h['host_name'])
                         del h[attribute]
 
                 if h not in r['hosts']:
-                    logger.info("[GLPI Arbiter] New host: %s" % h['host_name'])
+                    logger.info("[import-glpi] New host: %s" % h['host_name'])
                     r['hosts'].append(h)
-                    logger.debug("[GLPI Arbiter] Host info in Shinken: %s" % str(h))
+                    logger.debug("[import-glpi] Host info in Shinken: %s" % str(h))
 
             # Get hostgroups
             all_hostgroups = self.con.monitoring.shinkenHostgroups(arg)
-            logger.info("[GLPI Arbiter] Got %d hostgroups", len(all_hostgroups))
+            logger.info("[import-glpi] Got %d hostgroups", len(all_hostgroups))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for hostgroup_info in all_hostgroups:
-                logger.debug("[GLPI Arbiter] Hostgroup info in GLPI: %s " % str(hostgroup_info))
+                logger.debug("[import-glpi] Hostgroup info in GLPI: %s " % str(hostgroup_info))
                 h = hostgroup_info
                 for attribute in deleted_attributes:
                     if attribute in h:
-                        logger.warning("[GLPI Arbiter] Delete attribute '%s' for hostgroup '%s'", attribute, h['hostgroup_name'])
+                        logger.warning("[import-glpi] Delete attribute '%s' for hostgroup '%s'", attribute, h['hostgroup_name'])
                         del h[attribute]
 
                 if h not in r['hostgroups']:
-                    logger.info("[GLPI Arbiter] New hostgroup: %s" % h['hostgroup_name'])
+                    logger.info("[import-glpi] New hostgroup: %s" % h['hostgroup_name'])
                     r['hostgroups'].append(h)
-                    logger.debug("[GLPI Arbiter] Hostgroup info in Shinken: %s" % str(h))
+                    logger.debug("[import-glpi] Hostgroup info in Shinken: %s" % str(h))
 
             # Get templates
             all_templates = self.con.monitoring.shinkenTemplates(arg)
-            logger.warning("[GLPI Arbiter] Got %d services templates", len(all_templates))
+            logger.warning("[import-glpi] Got %d services templates", len(all_templates))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for template_info in all_templates:
-                logger.debug("[GLPI Arbiter] Template info in GLPI: %s" % template_info)
+                logger.debug("[import-glpi] Template info in GLPI: %s" % template_info)
                 h = template_info
                 for attribute in deleted_attributes:
                     if attribute in h:
-                        logger.warning("[GLPI Arbiter] Delete attribute '%s' for service template '%s'", attribute, h['name'])
+                        logger.warning("[import-glpi] Delete attribute '%s' for service template '%s'", attribute, h['name'])
                         del h[attribute]
 
                 if h not in r['servicestemplates']:
-                    logger.info("[GLPI Arbiter] New service template: %s" % h['name'])
+                    logger.info("[import-glpi] New service template: %s" % h['name'])
                     r['servicestemplates'].append(h)
-                    logger.debug("[GLPI Arbiter] Service template info in Shinken: %s" % str(h))
+                    logger.debug("[import-glpi] Service template info in Shinken: %s" % str(h))
 
             # Get services
             all_services = self.con.monitoring.shinkenServices(arg)
-            logger.warning("[GLPI Arbiter] Got %d services", len(all_services))
+            logger.warning("[import-glpi] Got %d services", len(all_services))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for service_info in all_services:
-                logger.debug("[GLPI Arbiter] Service info in GLPI: %s" % service_info)
+                logger.debug("[import-glpi] Service info in GLPI: %s" % service_info)
                 h = service_info
                 for attribute in deleted_attributes:
                     if attribute in h:
-                        logger.warning("[GLPI Arbiter] Delete attribute '%s' for service '%s/%s'", attribute, h['host_name'], h['service_description'])
+                        logger.warning("[import-glpi] Delete attribute '%s' for service '%s/%s'", attribute, h['host_name'], h['service_description'])
                         del h[attribute]
 
                 if h not in r['services']:
-                    logger.info("[GLPI Arbiter] New service: %s/%s" % (h['host_name'], h['service_description']))
+                    logger.info("[import-glpi] New service: %s/%s" % (h['host_name'], h['service_description']))
                     r['services'].append(h)
-                    logger.debug("[GLPI Arbiter] Service info in Shinken: %s" % str(h))
+                    logger.debug("[import-glpi] Service info in Shinken: %s" % str(h))
 
             # Get contacts
             all_contacts = self.con.monitoring.shinkenContacts(arg)
-            logger.warning("[GLPI Arbiter] Got %d contacts", len(all_contacts))
+            logger.warning("[import-glpi] Got %d contacts", len(all_contacts))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for contact_info in all_contacts:
-                logger.debug("[GLPI Arbiter] Contact info in GLPI: %s" % contact_info)
+                logger.debug("[import-glpi] Contact info in GLPI: %s" % contact_info)
                 h = contact_info
                 for attribute in deleted_attributes:
                     if attribute in h:
-                        logger.warning("[GLPI Arbiter] Delete attribute '%s' for contact '%s'", attribute, h['contact_name'])
+                        logger.warning("[import-glpi] Delete attribute '%s' for contact '%s'", attribute, h['contact_name'])
                         del h[attribute]
 
                 if h not in r['contacts']:
-                    logger.info("[GLPI Arbiter] New contact: %s" % (h['contact_name']))
+                    logger.info("[import-glpi] New contact: %s" % (h['contact_name']))
                     r['contacts'].append(h)
-                    logger.debug("[GLPI Arbiter] Contact info in Shinken: %s" % str(h))
+                    logger.debug("[import-glpi] Contact info in Shinken: %s" % str(h))
 
             # Get timeperiods
             all_timeperiods = self.con.monitoring.shinkenTimeperiods(arg)
-            logger.warning("[GLPI Arbiter] Got %d timeperiods", len(all_timeperiods))
+            logger.warning("[import-glpi] Got %d timeperiods", len(all_timeperiods))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
             for timeperiod_info in all_timeperiods:
-                logger.debug("[GLPI Arbiter] Timeperiod info in GLPI: %s" % str(timeperiod_info))
+                logger.debug("[import-glpi] Timeperiod info in GLPI: %s" % str(timeperiod_info))
                 h = timeperiod_info
                 for attribute in deleted_attributes:
                     if attribute in h:
-                        logger.warning("[GLPI Arbiter] Delete attribute '%s' for timeperiod '%s'", attribute, h['timeperiod_name'])
+                        logger.warning("[import-glpi] Delete attribute '%s' for timeperiod '%s'", attribute, h['timeperiod_name'])
                         del h[attribute]
 
                 if h not in r['timeperiods']:
-                    logger.info("[GLPI Arbiter] New timeperiod: %s" % h['timeperiod_name'])
+                    logger.info("[import-glpi] New timeperiod: %s" % h['timeperiod_name'])
                     r['timeperiods'].append(h)
-                    logger.debug("[GLPI Arbiter] Timeperiod info in Shinken: %s" % str(h))
+                    logger.debug("[import-glpi] Timeperiod info in Shinken: %s" % str(h))
 
-        logger.warning("[GLPI Arbiter] Sending %d commands to Arbiter", len(r['commands']))
-        logger.warning("[GLPI Arbiter] Sending %d hosts to Arbiter", len(r['hosts']))
-        logger.warning("[GLPI Arbiter] Sending %d hosts groups to Arbiter", len(r['hostgroups']))
-        logger.warning("[GLPI Arbiter] Sending %d services templates to Arbiter", len(r['servicestemplates']))
-        logger.warning("[GLPI Arbiter] Sending %d services to Arbiter", len(r['services']))
-        logger.warning("[GLPI Arbiter] Sending %d timeperiods to Arbiter", len(r['timeperiods']))
-        logger.warning("[GLPI Arbiter] Sending %d contacts to Arbiter", len(r['contacts']))
-        logger.info("[GLPI Arbiter] Sending all data to Arbiter")
+        logger.warning("[import-glpi] Sending %d commands to Arbiter", len(r['commands']))
+        logger.warning("[import-glpi] Sending %d hosts to Arbiter", len(r['hosts']))
+        logger.warning("[import-glpi] Sending %d hosts groups to Arbiter", len(r['hostgroups']))
+        logger.warning("[import-glpi] Sending %d services templates to Arbiter", len(r['servicestemplates']))
+        logger.warning("[import-glpi] Sending %d services to Arbiter", len(r['services']))
+        logger.warning("[import-glpi] Sending %d timeperiods to Arbiter", len(r['timeperiods']))
+        logger.warning("[import-glpi] Sending %d contacts to Arbiter", len(r['contacts']))
+        logger.info("[import-glpi] Sending all data to Arbiter")
 
         r['services'] = r['services'] + r['servicestemplates']
         del r['servicestemplates']
