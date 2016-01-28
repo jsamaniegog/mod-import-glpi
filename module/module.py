@@ -65,13 +65,14 @@ class Glpi_arbiter(BaseModule):
 
             # Target to build files on disk
             self.target = getattr(mod_conf, 'target', 'files')
-            self.target_directory = getattr(mod_conf, 'target_directory', '/etc/shinken/glpi')
-            if not os.path.exists(self.target_directory):
-                try:
-                    os.mkdir(self.target_directory)
-                    logger.info("[GLPI Arbiter] Created directory: %s", self.target_directory)
-                except Exception, exp:
-                    logger.error("[GLPI Arbiter] Directory creation failed: %s", exp)
+            if self.target == 'files':
+                self.target_directory = getattr(mod_conf, 'target_directory', '/etc/shinken/glpi')
+                if not os.path.exists(self.target_directory):
+                    try:
+                        os.mkdir(self.target_directory)
+                        logger.info("[GLPI Arbiter] Created directory: %s", self.target_directory)
+                    except Exception, exp:
+                        logger.error("[GLPI Arbiter] Directory creation failed: %s", exp)
 
         except AttributeError:
             logger.error("[GLPI Arbiter] The module is missing a property, check module configuration in import-glpi.cfg")
