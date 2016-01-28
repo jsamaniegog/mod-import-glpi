@@ -63,8 +63,8 @@ class Glpi_arbiter(BaseModule):
             self.tags = getattr(mod_conf, 'tags', '')
             self.session = None
 
-            # Target to build files on disk
-            self.target = getattr(mod_conf, 'target', 'files')
+            # Target to build files on disk, default is to provide objects to the calling daemon
+            self.target = getattr(mod_conf, 'target', '')
             if self.target == 'files':
                 self.target_directory = getattr(mod_conf, 'target_directory', '/etc/shinken/glpi')
                 if not os.path.exists(self.target_directory):
@@ -109,10 +109,11 @@ class Glpi_arbiter(BaseModule):
              'contacts': []}
 
         if self.target == 'files':
+            logger.warning("[import-glpi] configured to build files from command line, no objects provided to the calling daemon.")
             return r
 
         if not self.session:
-            logger.error("[import-glpi] No opened session, no objects to provide.")
+            logger.error("[import-glpi] No opened session, no objects no objects provided to the calling daemon.")
             return None
 
         if not self.tags:
