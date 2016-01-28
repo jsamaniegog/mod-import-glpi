@@ -113,6 +113,7 @@ class Glpi_arbiter(BaseModule):
 
         if not self.session:
             logger.error("[GLPI Arbiter] No opened session, no objects to provide.")
+            return None
 
         if not self.tags:
             self.tags = self.tag
@@ -307,6 +308,7 @@ class Glpi_arbiter(BaseModule):
 
         if not self.session:
             logger.error("[GLPI Arbiter] No opened session, no objects to provide.")
+            return None
 
         if not self.tags:
             self.tags = self.tag
