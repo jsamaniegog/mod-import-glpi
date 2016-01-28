@@ -304,21 +304,21 @@ class Glpi_arbiter(BaseModule):
 
     # Load configuration files from Glpi
     def get_files(self):
-        r = {'files': []}
+        result = []
 
         if not self.session:
-            logger.error("[GLPI Arbiter] No opened session, no objects to provide.")
+            print("[import-glpi] No opened session, no objects to provide.")
             return None
 
         if not self.tags:
             self.tags = self.tag
 
-        logger.debug("[GLPI Arbiter] Tags in configuration file: %s" % str(self.tags))
+        print("[import-glpi] Tags in configuration file: %s" % str(self.tags))
         try:
             self.tags = self.tags.split(',')
         except:
             pass
-        logger.info("[GLPI Arbiter] Tags (from configuration): %s" % str(self.tags))
+        print("[import-glpi] Tags (from configuration): %s" % str(self.tags))
 
         # Try to find sub-tags if they exist in Glpi
         # ---------------------------------------------------------------------------------------
@@ -332,14 +332,14 @@ class Glpi_arbiter(BaseModule):
         self.new_tags = []
         for tag in self.tags:
             tag = tag.strip()
-            logger.info("[import-glpi] Getting Glpi tags for entity tagged with '%s'" % tag)
+            print("[import-glpi] Getting Glpi tags for entity tagged with '%s'" % tag)
 
             # iso8859 is necessary because Arbiter does not deal with UTF8 objects !
             arg = {'session': self.session, 'iso8859': '1', 'tag': tag}
 
             # Get commands
             all_tags = self.con.monitoring.shinkenTags(arg)
-            logger.warning("[import-glpi] Got %d tags", len(all_tags))
+            print("[import-glpi] Got %d tags" % len(all_tags))
             if all_tags:
                 # Remove current tag and replace with Glpi provided list ...
                 # self.tags.remove(tag)
@@ -348,11 +348,11 @@ class Glpi_arbiter(BaseModule):
             else:
                 self.new_tags.append(tag)
 
-        logger.info("[import-glpi] Tags (from configuration + Glpi): %s" % str(self.new_tags))
+        print("[import-glpi] Tags (from configuration + Glpi): %s" % str(self.new_tags))
 
         for tag in self.new_tags:
             tag = tag.strip()
-            logger.info("[GLPI Arbiter] Getting configuration files for entity tagged with '%s'" % tag)
+            print("[import-glpi] Getting configuration files for entity tagged with '%s'" % tag)
 
 			# iso8859 is necessary because Arbiter does not deal with UTF8 objects !
             arg = {
@@ -364,16 +364,16 @@ class Glpi_arbiter(BaseModule):
 
             # Get files
             all_files = self.con.monitoring.shinkenGetConffiles(arg)
-            logger.warning("[GLPI Arbiter] Got %d files", len(all_files))
+            print("[import-glpi] Got %d files" % len(all_files))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             for file in all_files:
-                logger.info("[GLPI Arbiter] configuration file received from GLPI: %s" % file)
-                # logger.info("[GLPI Arbiter] file content: %s" % all_files[file])
+                print("[import-glpi] configuration file received from GLPI: %s" % file)
+                # logger.info("[import-glpi] file content: %s" % all_files[file])
                 filename = os.path.join(self.target_directory, "%s-%s" % (tag, file))
 
-                if filename not in r['files']:
-                    logger.info("[GLPI Arbiter] creating new file: %s ..." % filename)
-                    r['files'].append(filename)
+                if filename not in result:
+                    print("[import-glpi] creating new file: %s ..." % filename)
+                    result.append(filename)
 
                     try:
                         with os.fdopen(os.open(filename, os.O_WRONLY | os.O_CREAT, 0o644), 'w') as cfg_file:
@@ -383,19 +383,33 @@ class Glpi_arbiter(BaseModule):
                                     # ticket[field] = ticket[field].encode('utf8', 'ignore')
                                     # logger.info("[glpi-helpdesk] getTicket, field: %s = %s", field, ticket[field])
                             except UnicodeEncodeError:
-                                logger.error("[GLPI Arbiter] Error when encoding file content: %s - %s" % (filename, str(e)))
+                                print("[import-glpi] Error when encoding file content: %s - %s" % (filename, str(e)))
                                 pass
-                        logger.info("[GLPI Arbiter] created file: %s" % filename)
+                        print("[import-glpi] created file: %s" % filename)
                     except Exception as e:
-                        logger.error("[GLPI Arbiter] Error when writing file: %s - %s" % (filename, str(e)))
-                        logger.error("[GLPI Arbiter] file content: %s" % all_files[file])
+                        print("[import-glpi] Error when writing file: %s - %s" % (filename, str(e)))
+                        print("[import-glpi] file content: %s" % all_files[file])
 
-        logger.warning("[GLPI Arbiter] received %d files from Glpi" % len(r['files']))
+        print("[import-glpi] received %d files from Glpi" % len(result))
 
-        return r
+        return result
 
-# if __name__ == '__main__':
-    # conf = {
-    # }
+if __name__ == '__main__':
+    from shinken.objects.config import Config
+    conf = Config()
+    buf = conf.read_config(['/etc/shinken/modules/import-glpi.cfg', '/usr/local/etc/shinken/modules/import-glpi.cfg'])
+    cfg_objects = conf.read_config_buf(buf)
+    conf.create_objects_for_type(cfg_objects, 'module')
+    module = None
+    for mod in conf.modules:
+        if mod.get_name() == 'import-glpi':
+            module = mod
 
-    # instance = Glpi_arbiter(conf)
+    if module:
+        instance = Glpi_arbiter(module)
+        instance.init()
+        if instance.get_files():
+            exit(0)
+
+    print("[import-glpi] Error !")
+    exit(1)
