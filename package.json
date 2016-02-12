@@ -1,10 +1,10 @@
 {
   "name": "import-glpi",
   "types": ["module"],
-  "version": "2.2",
+  "version": "2.3",
   "homepage": "http://github.com/shinken-monitoring/mod-import-glpi",
   "author": "David Durieux",
-  "description": "Import Shinken configuration for hosts, services, commands, ... from the GLPI monitoring plugin.",
+  "description": "Import Shinken configuration for hosts, services, commands, ... from the GLPI monitoring plugin (version 2.2).",
   "contributors": [
     {
       "name": "David Durieux",
