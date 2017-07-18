@@ -95,7 +95,7 @@ class Glpi_arbiter(BaseModule):
              'services': [],
              'contacts': [],
              'host_dependencies': [],
-             'services_dependencies': []}
+             'service_dependencies': []}
 
         if not self.session:
             logger.error("[GLPI Arbiter] No opened session, no objects to provide.")
@@ -274,9 +274,9 @@ class Glpi_arbiter(BaseModule):
                         logger.warning("[GLPI Arbiter] Delete attribute '%s' for service '%s'", attribute, h['host_name'])
                         del h[attribute]
 
-                if h not in r['services_dependencies']:
+                if h not in r['service_dependencies']:
                     logger.info("[GLPI Arbiter] New service dependency: %s" % h['host_name'])
-                    r['services_dependencies'].append(h)
+                    r['service_dependencies'].append(h)
                     logger.debug("[GLPI Arbiter] Service dependency info in Shinken: %s" % str(h))
 
         logger.warning("[GLPI Arbiter] Sending %d commands to Arbiter", len(r['commands']))
