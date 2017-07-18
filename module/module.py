@@ -93,7 +93,9 @@ class Glpi_arbiter(BaseModule):
              'hostgroups': [],
              'servicestemplates': [],
              'services': [],
-             'contacts': []}
+             'contacts': [],
+             'host_dependencies': [],
+             'services_dependencies': []}
 
         if not self.session:
             logger.error("[GLPI Arbiter] No opened session, no objects to provide.")
@@ -241,6 +243,42 @@ class Glpi_arbiter(BaseModule):
                     r['timeperiods'].append(h)
                     logger.debug("[GLPI Arbiter] Timeperiod info in Shinken: %s" % str(h))
 
+            # Get hosts dependencies
+            all_hosts_dependencies = self.con.monitoring.shinkenHostsDependencies(arg)
+            logger.warning("[GLPI Arbiter] Got %d hosts dependencies", len(all_hosts_dependencies))
+            # List attributes provided by Glpi and that need to be deleted for Shinken
+            deleted_attributes = []
+            for host_dependency_info in all_hosts_dependencies:
+                logger.debug("[GLPI Arbiter] Host info in GLPI: %s " % str(host_dependency_info))
+                h = host_dependency_info
+                for attribute in deleted_attributes:
+                    if attribute in h:
+                        logger.warning("[GLPI Arbiter] Delete attribute '%s' for host '%s'", attribute, h['host_name'])
+                        del h[attribute]
+
+                if h not in r['host_dependencies']:
+                    logger.info("[GLPI Arbiter] New host dependency: %s" % h['host_name'])
+                    r['host_dependencies'].append(h)
+                    logger.debug("[GLPI Arbiter] Host dependency info in Shinken: %s" % str(h))
+                    
+            # Get service dependencies
+            all_service_dependencies = self.con.monitoring.shinkenServiceDependencies(arg)
+            logger.warning("[GLPI Arbiter] Got %d service dependencies", len(all_service_dependencies))
+            # List attributes provided by Glpi and that need to be deleted for Shinken
+            deleted_attributes = []
+            for service_dependency_info in all_service_dependencies:
+                logger.debug("[GLPI Arbiter] Service info in GLPI: %s " % str(service_dependency_info))
+                h = service_dependency_info
+                for attribute in deleted_attributes:
+                    if attribute in h:
+                        logger.warning("[GLPI Arbiter] Delete attribute '%s' for service '%s'", attribute, h['host_name'])
+                        del h[attribute]
+
+                if h not in r['services_dependencies']:
+                    logger.info("[GLPI Arbiter] New service dependency: %s" % h['host_name'])
+                    r['services_dependencies'].append(h)
+                    logger.debug("[GLPI Arbiter] Service dependency info in Shinken: %s" % str(h))
+
         logger.warning("[GLPI Arbiter] Sending %d commands to Arbiter", len(r['commands']))
         logger.warning("[GLPI Arbiter] Sending %d hosts to Arbiter", len(r['hosts']))
         logger.warning("[GLPI Arbiter] Sending %d hosts groups to Arbiter", len(r['hostgroups']))
@@ -248,6 +286,8 @@ class Glpi_arbiter(BaseModule):
         logger.warning("[GLPI Arbiter] Sending %d services to Arbiter", len(r['services']))
         logger.warning("[GLPI Arbiter] Sending %d timeperiods to Arbiter", len(r['timeperiods']))
         logger.warning("[GLPI Arbiter] Sending %d contacts to Arbiter", len(r['contacts']))
+        logger.warning("[GLPI Arbiter] Sending %d host dependencies to Arbiter", len(r['host_dependencies']))
+        logger.warning("[GLPI Arbiter] Sending %d service dependencies to Arbiter", len(r['service_dependencies']))
         logger.info("[GLPI Arbiter] Sending all data to Arbiter")
 
         r['services'] = r['services'] + r['servicestemplates']
