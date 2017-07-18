@@ -94,8 +94,8 @@ class Glpi_arbiter(BaseModule):
              'servicestemplates': [],
              'services': [],
              'contacts': [],
-             'host_dependencies': [],
-             'service_dependencies': []}
+             'hostdependencies': [],
+             'servicedependencies': []}
 
         if not self.session:
             logger.error("[GLPI Arbiter] No opened session, no objects to provide.")
@@ -256,9 +256,9 @@ class Glpi_arbiter(BaseModule):
                         logger.warning("[GLPI Arbiter] Delete attribute '%s' for host '%s'", attribute, h['host_name'])
                         del h[attribute]
 
-                if h not in r['host_dependencies']:
+                if h not in r['hostdependencies']:
                     logger.info("[GLPI Arbiter] New host dependency: %s" % h['host_name'])
-                    r['host_dependencies'].append(h)
+                    r['hostdependencies'].append(h)
                     logger.debug("[GLPI Arbiter] Host dependency info in Shinken: %s" % str(h))
                     
             # Get service dependencies
@@ -274,9 +274,9 @@ class Glpi_arbiter(BaseModule):
                         logger.warning("[GLPI Arbiter] Delete attribute '%s' for service '%s'", attribute, h['host_name'])
                         del h[attribute]
 
-                if h not in r['service_dependencies']:
+                if h not in r['servicedependencies']:
                     logger.info("[GLPI Arbiter] New service dependency: %s" % h['host_name'])
-                    r['service_dependencies'].append(h)
+                    r['servicedependencies'].append(h)
                     logger.debug("[GLPI Arbiter] Service dependency info in Shinken: %s" % str(h))
 
         logger.warning("[GLPI Arbiter] Sending %d commands to Arbiter", len(r['commands']))
@@ -286,8 +286,8 @@ class Glpi_arbiter(BaseModule):
         logger.warning("[GLPI Arbiter] Sending %d services to Arbiter", len(r['services']))
         logger.warning("[GLPI Arbiter] Sending %d timeperiods to Arbiter", len(r['timeperiods']))
         logger.warning("[GLPI Arbiter] Sending %d contacts to Arbiter", len(r['contacts']))
-        logger.warning("[GLPI Arbiter] Sending %d host dependencies to Arbiter", len(r['host_dependencies']))
-        logger.warning("[GLPI Arbiter] Sending %d service dependencies to Arbiter", len(r['service_dependencies']))
+        logger.warning("[GLPI Arbiter] Sending %d host dependencies to Arbiter", len(r['hostdependencies']))
+        logger.warning("[GLPI Arbiter] Sending %d service dependencies to Arbiter", len(r['servicedependencies']))
         logger.info("[GLPI Arbiter] Sending all data to Arbiter")
 
         r['services'] = r['services'] + r['servicestemplates']
