@@ -244,7 +244,7 @@ class Glpi_arbiter(BaseModule):
                     logger.debug("[GLPI Arbiter] Timeperiod info in Shinken: %s" % str(h))
 
             # Get hosts dependencies
-            all_hosts_dependencies = self.con.monitoring.shinkenHostsDependencies(arg)
+            all_hosts_dependencies = self.con.monitoring.shinkenHostDependencies(arg)
             logger.warning("[GLPI Arbiter] Got %d hosts dependencies", len(all_hosts_dependencies))
             # List attributes provided by Glpi and that need to be deleted for Shinken
             deleted_attributes = []
